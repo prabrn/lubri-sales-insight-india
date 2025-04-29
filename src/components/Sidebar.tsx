@@ -13,18 +13,21 @@ import {
   Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 
 const Sidebar: React.FC = () => {
   const [expanded, setExpanded] = useState(true);
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   const menuItems = [
-    { icon: Home, label: "Dashboard", active: true },
-    { icon: Users, label: "Members" },
-    { icon: Award, label: "Programs" },
-    { icon: Gift, label: "Rewards" },
-    { icon: BadgePercent, label: "Promotions" },
-    { icon: Wallet, label: "Transactions" },
-    { icon: Settings, label: "Settings" },
+    { icon: Home, label: "Dashboard", path: "/" },
+    { icon: Users, label: "Members", path: "/members" },
+    { icon: Award, label: "Programs", path: "/programs" },
+    { icon: Gift, label: "Rewards", path: "/rewards" },
+    { icon: BadgePercent, label: "Promotions", path: "/promotions" },
+    { icon: Wallet, label: "Transactions", path: "/transactions" },
+    { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   return (
@@ -55,18 +58,18 @@ const Sidebar: React.FC = () => {
         <ul className="space-y-1 px-2">
           {menuItems.map((item, index) => (
             <li key={index}>
-              <a
-                href="#"
+              <Link
+                to={item.path}
                 className={cn(
                   "flex items-center py-2 px-3 rounded-md transition-colors",
-                  item.active 
+                  currentPath === item.path
                     ? "bg-sidebar-primary text-sidebar-primary-foreground" 
                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
                 <item.icon size={20} />
                 {expanded && <span className="ml-3">{item.label}</span>}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
