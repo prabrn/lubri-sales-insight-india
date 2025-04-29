@@ -4,12 +4,13 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Home, 
-  BarChart3, 
-  PieChart, 
-  Map, 
   Users, 
+  Award, 
+  Gift, 
+  BadgePercent, 
   Settings, 
-  LogOut
+  LogOut,
+  Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,10 +19,11 @@ const Sidebar: React.FC = () => {
 
   const menuItems = [
     { icon: Home, label: "Dashboard", active: true },
-    { icon: BarChart3, label: "Sales Analysis" },
-    { icon: PieChart, label: "Products" },
-    { icon: Map, label: "Territory" },
-    { icon: Users, label: "Distributors" },
+    { icon: Users, label: "Members" },
+    { icon: Award, label: "Programs" },
+    { icon: Gift, label: "Rewards" },
+    { icon: BadgePercent, label: "Promotions" },
+    { icon: Wallet, label: "Transactions" },
     { icon: Settings, label: "Settings" },
   ];
 
@@ -36,9 +38,9 @@ const Sidebar: React.FC = () => {
         {expanded && (
           <div className="flex items-center flex-1">
             <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-white font-bold">
-              LS
+              LP
             </div>
-            <span className="ml-2 font-semibold">Lubricant Sales</span>
+            <span className="ml-2 font-semibold">Loyalty Program</span>
           </div>
         )}
         <button 
