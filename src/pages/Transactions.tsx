@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,85 +6,121 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { ArrowDown, ArrowUp, Clock } from "lucide-react";
-import { ChartContainer, ChartTitle } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
 const Transactions: React.FC = () => {
-  // Sample transaction data
-  const transactions = [
-    { 
-      id: "TRX-5823", 
-      member: "John Smith",
-      type: "Earned", 
-      points: 250,
-      reason: "Purchase",
-      date: "2025-04-29 14:32",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5822", 
-      member: "Emma Wilson",
-      type: "Redeemed", 
-      points: 500,
-      reason: "$10 Store Credit",
-      date: "2025-04-29 13:18",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5821", 
-      member: "Michael Brown",
-      type: "Earned", 
-      points: 150,
-      reason: "Referral Bonus",
-      date: "2025-04-29 11:45",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5820", 
-      member: "Sarah Johnson",
-      type: "Redeemed", 
-      points: 350,
-      reason: "Free Product Sample",
-      date: "2025-04-29 10:22",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5819", 
-      member: "David Lee",
-      type: "Earned", 
-      points: 75,
-      reason: "Birthday Bonus",
-      date: "2025-04-28 16:50",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5818", 
-      member: "Jennifer Garcia",
-      type: "Adjusted", 
-      points: 100,
-      reason: "Customer Service",
-      date: "2025-04-28 14:15",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5817", 
-      member: "Robert Wilson",
-      type: "Earned", 
-      points: 200,
-      reason: "Purchase",
-      date: "2025-04-28 11:30",
-      status: "Completed"
-    },
-    { 
-      id: "TRX-5816", 
-      member: "Lisa Martinez",
-      type: "Redeemed", 
-      points: 800,
-      reason: "25% Off Coupon",
-      date: "2025-04-28 09:05",
-      status: "Completed"
-    }
-  ];
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*, members(name)')
+          .order('transaction_date', { ascending: false })
+          .limit(8);
+        
+        if (error) throw error;
+        
+        // Transform the data to match the component's expected format
+        const formattedData = data.map(t => ({
+          id: t.id.slice(0, 8).toUpperCase(),
+          member: t.members.name,
+          type: t.type === 'Reward' ? 'Redeemed' : (t.type === 'Referral' ? 'Earned' : (t.points < 0 ? 'Redeemed' : 'Earned')),
+          points: Math.abs(t.points),
+          reason: t.description,
+          date: new Date(t.transaction_date).toLocaleString(),
+          status: 'Completed'
+        }));
+        
+        setTransactions(formattedData);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        // Fallback to static data if there's an error
+        setTransactions([
+          { 
+            id: "TRX-5823", 
+            member: "John Smith",
+            type: "Earned", 
+            points: 250,
+            reason: "Purchase",
+            date: "2025-04-29 14:32",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5822", 
+            member: "Emma Wilson",
+            type: "Redeemed", 
+            points: 500,
+            reason: "$10 Store Credit",
+            date: "2025-04-29 13:18",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5821", 
+            member: "Michael Brown",
+            type: "Earned", 
+            points: 150,
+            reason: "Referral Bonus",
+            date: "2025-04-29 11:45",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5820", 
+            member: "Sarah Johnson",
+            type: "Redeemed", 
+            points: 350,
+            reason: "Free Product Sample",
+            date: "2025-04-29 10:22",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5819", 
+            member: "David Lee",
+            type: "Earned", 
+            points: 75,
+            reason: "Birthday Bonus",
+            date: "2025-04-28 16:50",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5818", 
+            member: "Jennifer Garcia",
+            type: "Adjusted", 
+            points: 100,
+            reason: "Customer Service",
+            date: "2025-04-28 14:15",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5817", 
+            member: "Robert Wilson",
+            type: "Earned", 
+            points: 200,
+            reason: "Purchase",
+            date: "2025-04-28 11:30",
+            status: "Completed"
+          },
+          { 
+            id: "TRX-5816", 
+            member: "Lisa Martinez",
+            type: "Redeemed", 
+            points: 800,
+            reason: "25% Off Coupon",
+            date: "2025-04-28 09:05",
+            status: "Completed"
+          }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   // Transaction type indicator
   const getTransactionTypeIndicator = (type: string) => {
@@ -229,49 +264,55 @@ const Transactions: React.FC = () => {
                 <CardTitle>Recent Transactions</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Member</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Points</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-mono text-xs">{transaction.id}</TableCell>
-                        <TableCell>{transaction.member}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            {getTransactionTypeIndicator(transaction.type)}
-                            <Badge className={getTransactionBadgeColor(transaction.type)}>
-                              {transaction.type}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className={`font-medium ${
-                          transaction.type === "Earned" ? "text-green-600" :
-                          transaction.type === "Redeemed" ? "text-red-600" :
-                          "text-blue-600"
-                        }`}>
-                          {transaction.type === "Redeemed" ? "-" : "+"}{transaction.points}
-                        </TableCell>
-                        <TableCell>{transaction.reason}</TableCell>
-                        <TableCell>{transaction.date}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                            {transaction.status}
-                          </Badge>
-                        </TableCell>
+                {isLoading ? (
+                  <div className="flex justify-center items-center p-8">
+                    <p>Loading transactions...</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Member</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Points</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="font-mono text-xs">{transaction.id}</TableCell>
+                          <TableCell>{transaction.member}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              {getTransactionTypeIndicator(transaction.type)}
+                              <Badge className={getTransactionBadgeColor(transaction.type)}>
+                                {transaction.type}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className={`font-medium ${
+                            transaction.type === "Earned" ? "text-green-600" :
+                            transaction.type === "Redeemed" ? "text-red-600" :
+                            "text-blue-600"
+                          }`}>
+                            {transaction.type === "Redeemed" ? "-" : "+"}{transaction.points}
+                          </TableCell>
+                          <TableCell>{transaction.reason}</TableCell>
+                          <TableCell>{transaction.date}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
                 
                 <div className="mt-4">
                   <Pagination>
