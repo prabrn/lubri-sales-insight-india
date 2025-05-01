@@ -35,13 +35,34 @@ export const fetchRewards = async () => {
 
 // Promotions
 export const fetchPromotions = async () => {
-  const { data, error } = await supabase
+  // Fetch promotions data
+  const { data: promotionsData, error: promotionsError } = await supabase
     .from('promotions')
-    .select('*, products(name, category)')
+    .select('*')
     .order('start_date', { ascending: false });
   
-  if (error) throw error;
-  return data;
+  if (promotionsError) throw promotionsError;
+  
+  // For each promotion, fetch the associated product if product_id exists
+  const enrichedPromotions = await Promise.all(
+    promotionsData.map(async (promotion) => {
+      if (promotion.product_id) {
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('name, category')
+          .eq('id', promotion.product_id)
+          .single();
+        
+        return {
+          ...promotion,
+          products: productError ? null : productData
+        };
+      }
+      return promotion;
+    })
+  );
+  
+  return enrichedPromotions;
 };
 
 // Products
