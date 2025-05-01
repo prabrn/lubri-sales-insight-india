@@ -45,6 +45,33 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       program_members: {
         Row: {
           created_at: string
@@ -127,8 +154,11 @@ export type Database = {
           name: string
           percent_used: number
           points_awarded: number
+          product_id: string | null
+          region: string | null
           start_date: string | null
           status: string
+          target_audience: string | null
           updated_at: string
         }
         Insert: {
@@ -140,8 +170,11 @@ export type Database = {
           name: string
           percent_used?: number
           points_awarded?: number
+          product_id?: string | null
+          region?: string | null
           start_date?: string | null
           status: string
+          target_audience?: string | null
           updated_at?: string
         }
         Update: {
@@ -153,8 +186,11 @@ export type Database = {
           name?: string
           percent_used?: number
           points_awarded?: number
+          product_id?: string | null
+          region?: string | null
           start_date?: string | null
           status?: string
+          target_audience?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -304,7 +340,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      promotion_analytics: {
+        Row: {
+          actual_cost: number | null
+          budget: number | null
+          cost_per_member: number | null
+          end_date: string | null
+          enrolled_members: number | null
+          id: string | null
+          name: string | null
+          percent_used: number | null
+          points_awarded: number | null
+          product_category: string | null
+          product_name: string | null
+          region: string | null
+          start_date: string | null
+          status: string | null
+          target_audience: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

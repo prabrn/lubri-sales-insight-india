@@ -37,6 +37,28 @@ export const fetchRewards = async () => {
 export const fetchPromotions = async () => {
   const { data, error } = await supabase
     .from('promotions')
+    .select('*, products(name, category)')
+    .order('start_date', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};
+
+// Products
+export const fetchProducts = async () => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('name');
+  
+  if (error) throw error;
+  return data;
+};
+
+// Promotion Analytics
+export const fetchPromotionAnalytics = async () => {
+  const { data, error } = await supabase
+    .from('promotion_analytics')
     .select('*')
     .order('start_date', { ascending: false });
   
