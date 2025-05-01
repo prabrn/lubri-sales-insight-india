@@ -74,7 +74,7 @@ export const createPromotion = async (promotionData) => {
       status: promotionData.status,
       start_date: promotionData.start_date || null,
       end_date: promotionData.end_date || null,
-      product_id: promotionData.product_id || null,
+      product_id: promotionData.product_id === "none" ? null : promotionData.product_id || null,
       budget: promotionData.budget,
       region: promotionData.region || null,
       target_audience: promotionData.target_audience || null,

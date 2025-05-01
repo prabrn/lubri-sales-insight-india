@@ -429,7 +429,7 @@ const Promotions: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {products.map(product => (
                             <SelectItem key={product.id} value={product.id}>{product.name}</SelectItem>
                           ))}
