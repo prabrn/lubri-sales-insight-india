@@ -9,6 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { fetchPromotions } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Define a type for the product data
 type ProductData = {
@@ -37,6 +40,7 @@ type PromotionWithProduct = {
 
 const Promotions: React.FC = () => {
   const { toast } = useToast();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   
   // Fetch promotions data
   const { data: promotions = [], isLoading, error } = useQuery<PromotionWithProduct[]>({
@@ -81,6 +85,15 @@ const Promotions: React.FC = () => {
   const totalEnrolled = promotions.reduce((sum, p) => sum + p.enrolled_members, 0);
   const totalPointsAwarded = promotions.reduce((sum, p) => sum + p.points_awarded, 0);
   
+  const handleCreatePromotion = () => {
+    // For now, just show a success toast
+    toast({
+      title: "Coming soon!",
+      description: "Promotion creation functionality will be implemented soon.",
+    });
+    setCreateDialogOpen(false);
+  };
+  
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
       <Sidebar />
@@ -98,6 +111,17 @@ const Promotions: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Action Button */}
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Promotion
+                </Button>
+              </div>
+              
               {/* Promotion Stats */}
               <div className="grid gap-4 md:grid-cols-4">
                 <Card>
@@ -248,6 +272,29 @@ const Promotions: React.FC = () => {
           )}
         </main>
       </div>
+      
+      {/* Create Promotion Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Promotion</DialogTitle>
+            <DialogDescription>
+              Create a new marketing promotion or campaign.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-center text-muted-foreground">
+              Promotion creation form will be implemented here.
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreatePromotion}>Create Promotion</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
