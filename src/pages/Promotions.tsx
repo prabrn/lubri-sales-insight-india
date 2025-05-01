@@ -10,11 +10,36 @@ import { Progress } from "@/components/ui/progress";
 import { fetchPromotions } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
+// Define a type for the product data
+type ProductData = {
+  name: string;
+  category: string;
+};
+
+// Define a type for the promotion with optional products
+type PromotionWithProduct = {
+  id: string;
+  name: string;
+  status: string;
+  start_date?: string;
+  end_date?: string;
+  enrolled_members: number;
+  points_awarded: number;
+  budget: number;
+  percent_used: number;
+  region?: string;
+  target_audience?: string;
+  product_id?: string;
+  created_at: string;
+  updated_at: string;
+  products?: ProductData | null;
+};
+
 const Promotions: React.FC = () => {
   const { toast } = useToast();
   
   // Fetch promotions data
-  const { data: promotions = [], isLoading, error } = useQuery({
+  const { data: promotions = [], isLoading, error } = useQuery<PromotionWithProduct[]>({
     queryKey: ['promotions'],
     queryFn: fetchPromotions
   });
