@@ -65,6 +65,30 @@ export const fetchPromotions = async () => {
   return enrichedPromotions;
 };
 
+// Create Promotion
+export const createPromotion = async (promotionData) => {
+  const { data, error } = await supabase
+    .from('promotions')
+    .insert([{
+      name: promotionData.name,
+      status: promotionData.status,
+      start_date: promotionData.start_date || null,
+      end_date: promotionData.end_date || null,
+      product_id: promotionData.product_id || null,
+      budget: promotionData.budget,
+      region: promotionData.region || null,
+      target_audience: promotionData.target_audience || null,
+      // Initialize with defaults
+      enrolled_members: 0,
+      points_awarded: 0,
+      percent_used: 0
+    }])
+    .select();
+
+  if (error) throw error;
+  return data;
+};
+
 // Products
 export const fetchProducts = async () => {
   const { data, error } = await supabase

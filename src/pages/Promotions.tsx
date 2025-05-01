@@ -1,17 +1,25 @@
 
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/Sidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { fetchPromotions } from "@/services/api";
+import { fetchPromotions, fetchProducts, createPromotion } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Textarea } from "@/components/ui/textarea";
 
 // Define a type for the product data
 type ProductData = {
@@ -38,14 +46,47 @@ type PromotionWithProduct = {
   products?: ProductData | null;
 };
 
+// Create form schema using zod for validation
+const formSchema = z.object({
+  name: z.string().min(3, { message: "Promotion name must be at least 3 characters" }),
+  status: z.string(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  budget: z.coerce.number().min(1, { message: "Budget must be greater than 0" }),
+  region: z.string().optional(),
+  target_audience: z.string().optional(),
+  product_id: z.string().optional(),
+});
+
+type PromotionFormValues = z.infer<typeof formSchema>;
+
 const Promotions: React.FC = () => {
   const { toast } = useToast();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
   
+  // Form setup
+  const form = useForm<PromotionFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      status: "Draft",
+      budget: 1000,
+      region: "Global",
+      target_audience: "All Members",
+    },
+  });
+
   // Fetch promotions data
-  const { data: promotions = [], isLoading, error } = useQuery<PromotionWithProduct[]>({
+  const { data: promotions = [], isLoading, error } = useQuery({
     queryKey: ['promotions'],
     queryFn: fetchPromotions
+  });
+
+  // Fetch products for the dropdown
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts
   });
 
   // Show error toast if data fetching fails
@@ -85,13 +126,32 @@ const Promotions: React.FC = () => {
   const totalEnrolled = promotions.reduce((sum, p) => sum + p.enrolled_members, 0);
   const totalPointsAwarded = promotions.reduce((sum, p) => sum + p.points_awarded, 0);
   
-  const handleCreatePromotion = () => {
-    // For now, just show a success toast
-    toast({
-      title: "Coming soon!",
-      description: "Promotion creation functionality will be implemented soon.",
-    });
-    setCreateDialogOpen(false);
+  const handleCreatePromotion = async (data: PromotionFormValues) => {
+    try {
+      await createPromotion(data);
+      
+      // Close the dialog and show success message
+      setCreateDialogOpen(false);
+      
+      // Reset the form
+      form.reset();
+      
+      // Refetch promotions data
+      queryClient.invalidateQueries({ queryKey: ['promotions'] });
+      
+      // Show success toast
+      toast({
+        title: "Promotion created",
+        description: "Your new promotion has been created successfully.",
+      });
+    } catch (error) {
+      console.error("Error creating promotion:", error);
+      toast({
+        title: "Error creating promotion",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -275,7 +335,7 @@ const Promotions: React.FC = () => {
       
       {/* Create Promotion Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Create New Promotion</DialogTitle>
             <DialogDescription>
@@ -283,16 +343,175 @@ const Promotions: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
-            <p className="text-center text-muted-foreground">
-              Promotion creation form will be implemented here.
-            </p>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreatePromotion}>Create Promotion</Button>
-          </DialogFooter>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleCreatePromotion)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Promotion Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Summer Sale 2025" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Draft">Draft</SelectItem>
+                          <SelectItem value="Scheduled">Scheduled</SelectItem>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="product_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select product" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {products.map(product => (
+                            <SelectItem key={product.id} value={product.id}>{product.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="budget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Budget</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Region</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select region" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Global">Global</SelectItem>
+                          <SelectItem value="North America">North America</SelectItem>
+                          <SelectItem value="Europe">Europe</SelectItem>
+                          <SelectItem value="Asia Pacific">Asia Pacific</SelectItem>
+                          <SelectItem value="South America">South America</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="target_audience"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Audience</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select target audience" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="All Members">All Members</SelectItem>
+                          <SelectItem value="New Members">New Members</SelectItem>
+                          <SelectItem value="Premium Members">Premium Members</SelectItem>
+                          <SelectItem value="Inactive Members">Inactive Members</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+                <Button type="submit">Create Promotion</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
